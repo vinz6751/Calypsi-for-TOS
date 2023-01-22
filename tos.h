@@ -1,7 +1,7 @@
 #ifndef _TOS_H
 #define _TOS_H
 
-/* Thank you */
+/* Thank you tos.hyp ! */
 
 #include <stdint.h>
 
