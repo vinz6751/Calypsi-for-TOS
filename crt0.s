@@ -1,6 +1,6 @@
 ; Startup file for GEMDOS / TOS programs and desk accessories
 
-              .rtmodel cstartup,"gemdos" ; Tell that we're not using the default startup from the C library
+              .rtmodel cstartup,"tos" ; Tell that we're not using the default startup from the C library
 
               .rtmodel version, "1"
               .rtmodel core, "*"
@@ -35,22 +35,22 @@
 
 
 
-              .section gemdos_start, root, noreorder
-              .public __program_root_section, __program_gemdos_start
+              .section tos_start, root, noreorder
+              .public __program_root_section, __program_tos_start
                bra.s __program_root_section    ; Jump over header
 
                ; Header (holding program preferences)
 _stack_size:   .long 16384                      ; stack size (16KB default)
 
 __program_root_section:
-__program_gemdos_start:
+__program_tos_start:
 #ifdef __CALYPSI_DATA_MODEL_SMALL__
               move.l  4(sp),a4 ; Basepage
               move.l  8(a4),a4 ; Start of TEXT
               adda.l  #_NearBaseAddress,a4
 #endif
 ;;; Initialize data sections if needed.
-              .section gemdos_start, noroot, noreorder
+              .section tos_start, noroot, noreorder
               .pubweak __data_initialization_needed
               .extern __initialize_sections
               .align  2
@@ -60,14 +60,14 @@ __data_initialization_needed:
               call    __initialize_sections
 
 ;;; **** Initialize streams if needed.
-              .section gemdos_start, noroot, noreorder
+              .section tos_start, noroot, noreorder
               .pubweak __call_initialize_global_streams
               .extern __initialize_global_streams
 __call_initialize_global_streams:
               call    __initialize_global_streams
 
 ;;; **** Initialize heap if needed.
-              .section gemdos_start, noroot, noreorder
+              .section tos_start, noroot, noreorder
               .pubweak __call_heap_initialize
               .extern __heap_initialize, __default_heap
 __call_heap_initialize:
@@ -76,7 +76,7 @@ __call_heap_initialize:
               move.l  #.sectionStart heap,a1
               call    __heap_initialize
 
-              .section gemdos_start, noroot, noreorder
+              .section tos_start, noroot, noreorder
 #ifdef __CALYPSI_TARGET_SYSTEM_FOENIX__
               .pubweak _Gavin_initialize
 _Gavin_initialize:
@@ -93,7 +93,7 @@ _Gavin_initialize:
 #endif // __CALYPSI_DATA_MODEL_SMALL__
 #endif // __CALYPSI_TARGET_SYSTEM_FOENIX__
 
-                .section gemdos_start, root, noreorder
+                .section tos_start, root, noreorder
                 ; Determine whether we're a program or a GEM desk accessory
                 move.l  a0,d0
                 seq     d0
