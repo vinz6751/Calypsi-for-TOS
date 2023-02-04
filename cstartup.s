@@ -5,7 +5,6 @@
 
               ;; External declarations
               .section heap
-              .section stack
               .section data_init_table
 
               .extern __initialize_data, __initialize_udata
@@ -70,6 +69,8 @@ __call_heap_initialize:
 #ifdef __CALYPSI_TARGET_SYSTEM_FOENIX__
               .pubweak _Gavin_initialize
 _Gavin_initialize:
+;;; Detect which machine we're on. This is required e.g. to allow the compiler to
+;;; use the Foenix's FPU.
               move.l  #GavinLow,a0  ; assume A2560U system
               cmp.w   #0x4567,0x0010(a0) ; check byte order
               beq.s   20$
