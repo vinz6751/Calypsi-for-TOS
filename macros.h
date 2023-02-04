@@ -1,6 +1,11 @@
 #ifndef __MACROS_H
 #define __MACROS_H
 
+/*
+ * This file defines macros that should be used in lieu of jmp/bra and jsr/bsr.
+ * The appropriate 68K opcode will be used depending on the selected code model.
+ */
+
 #ifdef __CALYPSI_ASSEMBLER__
 
 #ifdef __CALYPSI_CODE_MODEL_SMALL__

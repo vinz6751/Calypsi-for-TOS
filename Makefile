@@ -1,6 +1,6 @@
 # Assembly
 AS=as68k
-ASFLAGS=-l
+ASFLAGS=
 
 # C
 CC=cc68k
@@ -8,7 +8,7 @@ CFLAGS=--data-model small --code-model large
 
 # Linker
 LD=ln68k
-LDFLAGS=--output-format=tos --cross-reference clib-68000-lc-sd.a --rtattr cstartup=tos --hosted
+LDFLAGS=--output-format=tos --cross-reference clib-68000-lc-sd.a --rtattr cstartup=tos --hosted --stack-size 2048
 
 # Librarian
 AR=nlib
