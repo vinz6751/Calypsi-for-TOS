@@ -61,18 +61,18 @@ _Stub_fsetpos:
 
     .public _Stub_read
 _Stub_read: 
-	move.l    d1,-(sp)
 	move.l    a0,-(sp)
+	move.l    d1,-(sp)
 	move.w    d0,-(sp)
 	move.w    #63,-(sp) 	; Fread
 	trap      #1
 	lea       0xC(sp),sp
 	rts
 
-    .public _Stub_write
+	.public _Stub_write
 _Stub_write: 
-	move.l    d1,-(sp)
 	move.l    a0,-(sp)
+	move.l    d1,-(sp)
 	move.w    d0,-(sp)
 	move.w    #64,-(sp) 	; Fwrite
 	trap      #1
@@ -106,7 +106,7 @@ _Stub_exit:
     	move.w    d0,-(sp)
     	move.w    #76,-(sp)	;  Pterm
     	trap      #1
-    	addq.l    #4,sp
+    	addq.l    #4,sp		; Not reachable
 
 
 /****************************************************************************
