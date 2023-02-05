@@ -155,7 +155,7 @@ $(MAIN_TARGET): $(OBJS) toslib.a libc_stubs.a
 	$(LD) $^ $(LDFLAGS)
 	$(REN) ln68k.prg $@
 # Convenience: copy that to the folder mounted as Atari drive in your favourite emulator
-	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
+#	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
 
 # Builds the TOS library, containing bindings for the TOS operating system
 toslib.a: bios_stubs.o xbios_stubs.o gemdos_stubs.o
