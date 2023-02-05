@@ -1,4 +1,4 @@
-# This is a GNU Make makefile for the Calypsi C compiler targetting TOS
+# This is a GNU Make makefile for the Calypsi C compiler targeting TOS
 # You may obtain GNU Make from https://www.gnu.org/software/make/
 # You may obtain Calypsi from https://www.calypsi.cc/
 #
@@ -10,9 +10,12 @@
 # compile a C source file into an object file etc.), then you tell it what you
 # want to build and it works out what needs done to achieve it (depending on
 # what files have changed), and runs the receipes for building what needs it.
-# Make is an ubiquitous tool available on all platforms and has been around for
-# 40 years or so.
-
+# Make is an ubiquitous tool available on all platforms.
+#
+# Caveat:
+#  * the auto-dependencies don't work on Windows.
+# To do:
+#  * have build artifacts in a separate folder.
 
 # General preferences ---------------------------------------------------------
 
@@ -24,12 +27,12 @@ CODE_MODEL=large
 DATA_MODEL=small
 # stack size
 STACK_SIZE=2048
-# Target hardware. The compiler can make use of hardware FPU etc. Can be left blank.
-TARGET_HW=Foenix
+# Target hardware. Possible values: Foenix, can be left blank.
+TARGET_HW=
 # Enable 64-bit double-precision floating point numbers (default is 32bits).
-DOUBLE64=yes
+DOUBLE64=no
 # Include debugging information. Makes executables bigger.
-DEBUG=yes
+DEBUG=no
 
 
 # Preferences -----------------------------------------------------------------
@@ -45,8 +48,9 @@ AS=as68k
 ASFLAGS=
 ifeq ($(DEBUG),yes)
   ASFLAGS += --debug
+else ifeq ($(DEBUG),no)
 else
- $(error wrong DEBUG)
+ $(error Unrecognized DEBUG value)
 endif
 
 # C
@@ -72,7 +76,7 @@ ifeq ($(CODE_MODEL),large)
 else ifeq ($(CODE_MODEL),small)
   LIB_CODE_MODEL := sc
 else
-  $(error Unrecognized code model)
+  $(error Unrecognized CODE_MODEL value)
 endif
 # Data model
 ifeq ($(DATA_MODEL),large)
@@ -82,7 +86,7 @@ else ifeq ($(DATA_MODEL),small)
 else ifeq ($(DATA_MODEL),far-only)
   LIB_DATA_MODEL := fod
 else
-  $(error Unrecognized data model)
+  $(error Unrecognized DATA_MODEL value)
 endif
 # Target
 ifeq ($(TARGET_HW),Foenix)
@@ -90,7 +94,7 @@ ifeq ($(TARGET_HW),Foenix)
 else ifeq ($(TARGET_HW),)
   LIB_TARGET_HW :=
 else
-  $(error Unrecognized target hardware)
+  $(error Unrecognized TARGET_HW value)
 endif
 # 64-bit doubles
 ifeq ($(DOUBLE64),yes)
@@ -98,7 +102,7 @@ ifeq ($(DOUBLE64),yes)
 else ifeq ($(DOUBLE64),no)
   LIB_DOUBLE64 :=
 else
-  $(error Unrecognized setting for DOUBLE64)
+  $(error Unrecognized DOUBLE64 value)
 endif
 CLIB = clib-68000-$(LIB_CODE_MODEL)-$(LIB_DATA_MODEL)$(LIB_DOUBLE64)$(LIB_TARGET_HW).a
 
@@ -127,7 +131,11 @@ endif
 MAIN_TARGET=calypsi.prg
 
 # Modules. list out your modules (whether they're assembly or C) here, with .o extension
-OBJS=crt0.o crt.o main.o
+# Leave crt0.s and crt.c in, as they're the required startup code for TOS.
+SRC_CRT0=crt0.s
+SRC_C=crt.c main.c
+SRC_S=
+OBJS=$(SRC_C:.c=.o) $(SRC_S:.o=.s)
 
 
 # Receipes --------------------------------------------------------------------
@@ -151,7 +159,7 @@ OBJS=crt0.o crt.o main.o
 # target it finds in the make file, so it's usual to have "all" as first target.
 all:$(MAIN_TARGET)
 
-$(MAIN_TARGET): $(OBJS) toslib.a libc_stubs.a
+$(MAIN_TARGET): crt0.o $(OBJS) toslib.a libc_stubs.a
 	$(LD) $^ $(LDFLAGS)
 	$(REN) ln68k.prg $@
 # Convenience: copy that to the folder mounted as Atari drive in your favourite emulator
@@ -165,6 +173,23 @@ toslib.a: bios_stubs.o xbios_stubs.o gemdos_stubs.o
 libc_stubs.a: libc_stubs.o
 	$(AR) $@ $^
 
+# Use the C compiler to produce a dependencies file specifying which header files
+# a C file depends on, such that if one of these .h files are updated then the
+# depending C files are rebuilt.
+# See https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html#Automatic-Prerequisites
+ifeq ($(OS),Windows_NT)
+# Windows has no "sed" command, so we can't follow the recommendation above.
+# If you do want to make this work on Windows, you may try
+# https://gnuwin32.sourceforge.net/packages/sed.htm
+else
+include $(OBJS:.o=.d)
+%.d: %.c
+	@set -e; $(RM) $@; \
+		$(CC) --dependencies $(CPPFLAGS) $< > $@.$$$$; \
+		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+		$(RM) $@.$$$$
+endif
+
 # This is a phony target just to remove all build artifacts
 clean:
-	$(RM) *.a *.elf *.s68 *.hunk *.o *.lst *.prg toslib.a libc_stubs.a
+	$(RM) *.a *.elf *.s68 *.bin *.hunk, *.pgz *.o *.d *.lst $(MAIN_TARGET) toslib.a libc_stubs.a
