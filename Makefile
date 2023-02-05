@@ -20,19 +20,26 @@
 # General preferences ---------------------------------------------------------
 
 # What is this: options that translate into command line options for Calypsi.
+# All this can be overriden from the command line, e.g. if you want a stack
+# size of 4096 instead you can do "make -DSTACK_SIZE=4096"
 
 # Code model: large (full address space addressing) or small (PC-relative)
 CODE_MODEL=large
 # Data model: small (a4-relative), large (full-address space addressing and a4-relative), or far-only (full address space addressing, a4 is general purpose)
 DATA_MODEL=small
-# stack size
+# Stack size
 STACK_SIZE=2048
-# Target hardware. Possible values: Foenix, can be left blank.
+# CPU core. Valid values are 68000, 68010
+CPU_CORE=68000
+# Target hardware. The compiler will try to use if e.g. for floating point
+# operations. Possible values are : Foenix, can be left blank.
 TARGET_HW=
+# Target OS. Valid values are tos, mcp, srec
+TARGET_OS=tos
 # Enable 64-bit double-precision floating point numbers (default is 32bits).
 DOUBLE64=no
-# Include debugging information. Makes executables bigger.
-DEBUG=no
+# Include debugging information. Makes executables bigger. yes or no.
+DEBUG=yes
 
 
 # Preferences -----------------------------------------------------------------
@@ -43,19 +50,25 @@ DEBUG=no
 # Due to historical reason, 'make' has convenient implicit rules for building 
 # object files
 
+ifeq ($(CPU_CORE),68000)
+  # 68000 is the default so we don't specify it to keep the command line short
+else
+  CPU_CORE_FLAG=--core $(CPU_CORE)
+endif
+
 # Assembly
 AS=as68k
-ASFLAGS=
+ASFLAGS=$(CPU_CORE_FLAG)
 ifeq ($(DEBUG),yes)
-  ASFLAGS += --debug
+  ASFLAGS += --debug --list-file=$(@:%.o=%.lst)
 else ifeq ($(DEBUG),no)
 else
- $(error Unrecognized DEBUG value)
+  $(error Unrecognized DEBUG value)
 endif
 
 # C
 CC=cc68k
-CFLAGS=--data-model $(DATA_MODEL) --code-model $(CODE_MODEL)
+CFLAGS=--data-model $(DATA_MODEL) --code-model $(CODE_MODEL) $(CPU_CORE_FLAG)
 
 ifneq ($(TARGET_HW),)
   CFLAGS += --target $(TARGET_HW)
@@ -64,12 +77,11 @@ ifeq ($(DOUBLE64),yes)
   CFLAGS += --64bit-doubles
 endif
 ifeq ($(DEBUG),yes)
-  CFLAGS += --debug
+  CFLAGS += --debug --list-file=$(@:%.o=%.lst)
 endif
 
 # Linker
 LD=ln68k
-CLIB=clib-68000
 # Code model
 ifeq ($(CODE_MODEL),large)
   LIB_CODE_MODEL := lc
@@ -104,10 +116,23 @@ else ifeq ($(DOUBLE64),no)
 else
   $(error Unrecognized DOUBLE64 value)
 endif
-CLIB = clib-68000-$(LIB_CODE_MODEL)-$(LIB_DATA_MODEL)$(LIB_DOUBLE64)$(LIB_TARGET_HW).a
+CLIB = clib-$(CPU_CORE)-$(LIB_CODE_MODEL)-$(LIB_DATA_MODEL)$(LIB_DOUBLE64)$(LIB_TARGET_HW).a
 
-LDFLAGS=--output-format=tos --cross-reference $(CLIB) --rtattr cstartup=tos --stack-size $(STACK_SIZE)
-# Note: --hosted is assumed for the TOS target
+LDFLAGS=--stack-size $(STACK_SIZE) $(CLIB)
+ifeq ($(TARGET_OS),tos)
+  LDFLAGS += --output-format=tos --rtattr cstartup=tos
+  # Note: --hosted is assumed for the TOS target
+else ifeq ($(TARGET_OS),mcp)
+  LDFLAGS += --output-format=pgz --hosted
+else ifeq ($(TARGET_OS),srec)
+  LDFLAGS += --output-format=s68 --hosted
+else ifeq ($(TARGET_OS),raw)
+  LDFLAGS += --output-format=raw --hosted
+endif
+
+ifeq ($(DEBUG),yes)
+  LDFLAGS +=-l --cross-reference
+endif
 
 # Librarian
 AR=nlib
@@ -132,10 +157,18 @@ MAIN_TARGET=calypsi.prg
 
 # Modules. list out your modules (whether they're assembly or C) here, with .o extension
 # Leave crt0.s and crt.c in, as they're the required startup code for TOS.
-SRC_CRT0=crt0.s
-SRC_C=crt.c main.c
+SRC_C= main.c
 SRC_S=
-OBJS=$(SRC_C:.c=.o) $(SRC_S:.o=.s)
+
+# Adapt to target OS by adding startup and libraries
+ifeq ($(TARGET_OS),tos)
+  SRC_STARTUP=crt0.o crt.o
+  LIBS_OS=toslib.a libc_stubs_tos.a
+endif
+
+OBJS_C=$(SRC_C:.c=.o)
+OBJS_S=$(SRC_S:.o=.s)
+OBJS=$(SRC_STARTUP) $(OBJS_C) $(OBJS_S) $(LIBS_OS)
 
 
 # Receipes --------------------------------------------------------------------
@@ -159,30 +192,30 @@ OBJS=$(SRC_C:.c=.o) $(SRC_S:.o=.s)
 # target it finds in the make file, so it's usual to have "all" as first target.
 all:$(MAIN_TARGET)
 
-$(MAIN_TARGET): crt0.o $(OBJS) toslib.a libc_stubs.a
+$(MAIN_TARGET): $(OBJS) 
 	$(LD) $^ $(LDFLAGS)
 	$(REN) ln68k.prg $@
 # Convenience: copy that to the folder mounted as Atari drive in your favourite emulator
 #	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
 
+# Builds the stubs which "glue" the standard C library to the TOS
+libc_stubs_tos.a: libc_stubs_tos.o
+	$(AR) $@ $^
+
 # Builds the TOS library, containing bindings for the TOS operating system
 toslib.a: bios_stubs.o xbios_stubs.o gemdos_stubs.o
 	$(AR) $@ $^
 
-# Builds the stubs which "glue" the standard C library to the OS
-libc_stubs.a: libc_stubs.o
-	$(AR) $@ $^
-
 # Use the C compiler to produce a dependencies file specifying which header files
 # a C file depends on, such that if one of these .h files are updated then the
-# depending C files are rebuilt.
-# See https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html#Automatic-Prerequisites
+# depending C files are rebuilt. The below is pretty much a copy paste from
+# https://www.gnu.org/software/make/manual/html_node/Automatic-Prerequisites.html#Automatic-Prerequisites
 ifeq ($(OS),Windows_NT)
 # Windows has no "sed" command, so we can't follow the recommendation above.
 # If you do want to make this work on Windows, you may try
 # https://gnuwin32.sourceforge.net/packages/sed.htm
 else
-include $(OBJS:.o=.d)
+include $(OBJS_C:.o=.d)
 %.d: %.c
 	@set -e; $(RM) $@; \
 		$(CC) --dependencies $(CPPFLAGS) $< > $@.$$$$; \
@@ -192,4 +225,4 @@ endif
 
 # This is a phony target just to remove all build artifacts
 clean:
-	$(RM) *.a *.elf *.s68 *.bin *.hunk, *.pgz *.o *.d *.lst $(MAIN_TARGET) toslib.a libc_stubs.a
+	$(RM) *.a *.elf *.s68 *.bin *.hunk, *.pgz *.o *.d *.lst $(MAIN_TARGET) toslib.a libc_stubs_tos.a
