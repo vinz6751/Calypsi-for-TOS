@@ -39,7 +39,7 @@ TARGET_OS=tos
 # Enable 64-bit double-precision floating point numbers (default is 32bits).
 DOUBLE64=no
 # Include debugging information. Makes executables bigger. yes or no.
-DEBUG=yes
+DEBUG=no
 
 
 # Preferences -----------------------------------------------------------------
