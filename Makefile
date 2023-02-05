@@ -140,13 +140,12 @@ AR=nlib
 # OS-specific utilities
 ifeq ($(OS),Windows_NT)
   CP=copy
-  REN=ren
   MV=move
   RM=del /Q /F
 else
   CP=cp
-  REN=mv
   MV=mv
+  # GNU Make defines RM by default
 endif
 
 
@@ -193,8 +192,7 @@ OBJS=$(SRC_STARTUP) $(OBJS_C) $(OBJS_S) $(LIBS_OS)
 all:$(MAIN_TARGET)
 
 $(MAIN_TARGET): $(OBJS) 
-	$(LD) $^ $(LDFLAGS)
-	$(REN) ln68k.prg $@
+	$(LD) -o $@ $^ $(LDFLAGS)
 # Convenience: copy that to the folder mounted as Atari drive in your favourite emulator
 #	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
 
@@ -217,7 +215,8 @@ ifeq ($(OS),Windows_NT)
 else
 include $(OBJS_C:.o=.d)
 %.d: %.c
-	@set -e; $(RM) $@; \
+	@set -e; \
+		$(RM) $@; \
 		$(CC) --dependencies $(CPPFLAGS) $< > $@.$$$$; \
 		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 		$(RM) $@.$$$$
