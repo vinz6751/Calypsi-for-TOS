@@ -1,10 +1,13 @@
 /* Parse the command line given in the BASEPAGE.p_cmdlin */
+#include <string.h>
 
 enum cmd_line_parsing_state {
     SKIPPING_WHITESPACE,
     PARSING_QUOTED,
     PARSING_UNQUOTED
 };
+
+extern char * const __env;
 
 int parse_cmd_line(unsigned char length, char *cmdline, char **argv)
 {
@@ -48,4 +51,25 @@ int parse_cmd_line(unsigned char length, char *cmdline, char **argv)
 
     argv[argc] = (char*)0L;
     return argc;
+}
+
+char *getenv(const char *psrch)
+{
+    char *p;
+    short len;
+    char  *ppath;
+
+    len = strlen(psrch);
+    ppath = NULL;
+
+    // Scan environment string until double null
+    for (p = __env; *p; ) {
+        if (strncmp(p, psrch, len) == 0 && p[len+1] == '=') {
+            ppath = p + len + 1;
+            break;
+        }
+        while(*p++) // skip to end of current env variable
+            ;
+    }
+    return ppath;
 }
