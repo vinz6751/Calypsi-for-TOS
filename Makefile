@@ -161,7 +161,7 @@ SRC_S=
 
 # Adapt to target OS by adding startup and libraries
 ifeq ($(TARGET_OS),tos)
-  SRC_STARTUP=crt0.o crt.o
+  SRC_STARTUP=crt0.o
   LIBS_OS=toslib.a libc_stubs_tos.a
 endif
 
@@ -196,12 +196,12 @@ $(MAIN_TARGET): $(OBJS)
 # Convenience: copy that to the folder mounted as Atari drive in your favourite emulator
 #	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
 
-# Builds the stubs which "glue" the standard C library to the TOS
+# Builds the stubs which "glues" the standard C library to the TOS
 libc_stubs_tos.a: libc_stubs_tos.o
 	$(AR) $@ $^
 
 # Builds the TOS library, containing bindings for the TOS operating system
-toslib.a: bios_stubs.o xbios_stubs.o gemdos_stubs.o
+toslib.a: crt.o bios_stubs.o xbios_stubs.o gemdos_stubs.o
 	$(AR) $@ $^
 
 # Use the C compiler to produce a dependencies file specifying which header files

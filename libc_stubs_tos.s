@@ -97,7 +97,7 @@ _Stub_remove:
 	rts
 
 	.public _Stub_environ
-	.public __env
+	.extern __env
 _Stub_environ:
 	move.l	__env,d0
 	rts

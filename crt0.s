@@ -156,6 +156,7 @@ _empty_string:	.space 2,0
 	.section zfar,bss
 #endif
 	.align 4
-	.public __basepage, __env
+	.public __basepage
+	.public __env
 __basepage:	.space 4 ; pointer to basepage
 __env:		.space 4 ; environment string
