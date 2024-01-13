@@ -26,7 +26,7 @@
 # Code model: large (full address space addressing) or small (PC-relative)
 CODE_MODEL=large
 # Data model: small (a4-relative), large (full-address space addressing and a4-relative), or far-only (full address space addressing, a4 is general purpose)
-DATA_MODEL=small
+DATA_MODEL=large
 # Stack size
 STACK_SIZE=2048
 # CPU core. Valid values are 68000, 68010
@@ -197,11 +197,11 @@ $(MAIN_TARGET): $(OBJS)
 #	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
 
 # Builds the stubs which "glues" the standard C library to the TOS
-libc_stubs_tos.a: libc_stubs_tos.o
+libc_stubs_tos.a: libc_stubs_tos.o libc_stubs_c.o
 	$(AR) $@ $^
 
 # Builds the TOS library, containing bindings for the TOS operating system
-toslib.a: crt.o bios_stubs.o xbios_stubs.o gemdos_stubs.o
+toslib.a: crt.o bios.o xbios.o gemdos.o
 	$(AR) $@ $^
 
 # Use the C compiler to produce a dependencies file specifying which header files
@@ -222,6 +222,11 @@ include $(OBJS_C:.o=.d)
 		$(RM) $@.$$$$
 endif
 
+
+install: toslib.a
+	$(CP) toslib.a "C:\Program Files (x86)\Calypsi-68000\lib\"
+	$(CP) tos.h "C:\Program Files (x86)\Calypsi-68000\include\"
+
 # This is a phony target just to remove all build artifacts
 clean:
-	$(RM) *.a *.elf *.s68 *.bin *.hunk, *.pgz *.o *.d *.lst $(MAIN_TARGET) toslib.a libc_stubs_tos.a
+	$(RM) *.a *.elf *.s68 *.bin *.hunk, *.pgz *.o *.d* *~ *.lst $(MAIN_TARGET) toslib.a libc_stubs_tos.a

@@ -2,6 +2,11 @@
 #define _TOS_H
 
 /* Thank you tos.hyp ! */
+#define CDECL __attribute__((simple_call))
+
+/* Registered clobbered by the TOS (used by OS bindings */
+#define TOS_CLOBBERED_REGS "d0","d1","d2","a0","a1","a2"
+typedef void (*_cpu_irq_handler_t)(void);
 
 #include <stdint.h>
 
@@ -35,55 +40,55 @@
 /* BIOS parameter block */
 typedef struct
 {
-	int16_t recsiz; /* Bytes per sector */
-	int16_t clsiz;  /* Sectors per cluster */
-	int16_t clsizb; /* Bytes per cluster */
-	int16_t rdlen;  /* Directory length */
-	int16_t fsiz;   /* Length of the FAT in sectors */
-	int16_t fatrec; /* Start of the 2nd FAT */
-	int16_t datrec; /* 1st free sector */
-	int16_t numcl;  /* Total number of clusters */
-	int16_t bflags; /* Flags as bit-vector */
-                       /* Bit 0: 0 (12-Bit-FAT), 1 16-Bit-FAT  */
-                       /* Bit 1: 0 (two FATs), 1 (one FAT)     */
-                       /*        only available since TOS 2.06 */
+    int16_t recsiz; /* Bytes per sector */
+    int16_t clsiz;  /* Sectors per cluster */
+    int16_t clsizb; /* Bytes per cluster */
+    int16_t rdlen;  /* Directory length */
+    int16_t fsiz;   /* Length of the FAT in sectors */
+    int16_t fatrec; /* Start of the 2nd FAT */
+    int16_t datrec; /* 1st free sector */
+    int16_t numcl;  /* Total number of clusters */
+    int16_t bflags; /* Flags as bit-vector */
+    /* Bit 0: 0 (12-Bit-FAT), 1 16-Bit-FAT  */
+    /* Bit 1: 0 (two FATs), 1 (one FAT)     */
+    /*        only available since TOS 2.06 */
 } BPB;
 
 
 /* Process Descriptor */
-typedef struct basep
+typedef struct basepage_t
 {
-	char		*p_lowtpa;	/* pointer to self (bottom of TPA) */
-	char		*p_hitpa;	/* pointer to top of TPA + 1 */
-	char		*p_tbase;	/* base of text segment */
-	long		p_tlen;		/* 12 length of text segment */
-	char		*p_dbase;	/* base of data segment */
-	long		p_dlen;		/* length of data segment */
-	char		*p_bbase;	/* base of BSS segment */
-	long		p_blen;		/* length of BSS segment */
-	char		*p_dta;		/* pointer to current DTA */
-	struct basep	*p_parent;	/* pointer to parent's basepage */
-	char		*p_reserved;	/* reserved for future use */
-	char		*p_env;		/* pointer to environment string */
-	long		p_undef[20];	/* scratch area... don't touch */
-	char		p_cmdlin[128];	/* command line image */
+    char *p_lowtpa;	/* pointer to self (bottom of TPA) */
+    char *p_hitpa;	/* pointer to top of TPA + 1 */
+    char *p_tbase;	/* base of text segment */
+    long  p_tlen;	/* 12 length of text segment */
+    char *p_dbase;	/* base of data segment */
+    long  p_dlen;	/* length of data segment */
+    char *p_bbase;	/* base of BSS segment */
+    long  p_blen;	/* length of BSS segment */
+    char *p_dta;	/* pointer to current DTA */
+    struct basepage_t	*p_parent;	/* pointer to parent's basepage */
+    char *p_reserved;	/* reserved for future use */
+    char *p_env;	/* pointer to environment string */
+    long  p_undef[20];	/* scratch area... don't touch */
+    char  p_cmdlin[128];/* command line image */
 } BASEPAGE;
 
 /* Memory Descriptor */
 typedef struct md_t
 {
-     struct md_t *m_link;         /* Next MD (or NULL)          */
-     long m_start;       /* saddr of block             */
-     long m_length;      /* # bytes in block           */
-     BASEPAGE *m_own;          /* Owner's process descriptor */
+    struct md_t *m_link;/* Next MD (or NULL)          */
+    long m_start;       /* saddr of block             */
+    long m_length;      /* # bytes in block           */
+    BASEPAGE *m_own;    /* Owner's process descriptor */
 } MD;
 
 /* Memory Partition Block */
 typedef struct
 {
-    MD *mp_mfl;      /* Memory free list      */
-    MD *mp_mal;      /* Memory allocated list */
-    MD *mp_rover;    /* Roving ptr            */
+    MD *mp_mfl;   /* Memory free list      */
+    MD *mp_mal;   /* Memory allocated list */
+    MD *mp_rover; /* Roving ptr            */
 } MPB;
 
 /* BIOS functions */
@@ -92,7 +97,7 @@ int16_t Bconstat(int16_t dev);
 int32_t Bconin(int16_t dev);
 void    Bconout(int16_t dev, int16_t c);
 int32_t Rwabs(int16_t rwflag, void *buff, int16_t cnt, int16_t recnr, int16_t dev, int32_t lrecno );
-int32_t Setexc(int16_t number, void (*vec)(void));
+_cpu_irq_handler_t Setexc(int16_t number, _cpu_irq_handler_t vector);
 int32_t Tickcal(void);
 int32_t Bcostat(int16_t dev);
 int32_t Mediach(int16_t dev);
@@ -113,69 +118,69 @@ int32_t Kbshift(int16_t mode);
 /* XBIOS structures */
 typedef struct
 {
-	int8_t  topmode;  /* 0: Y=0 at bottom */
-					  /* 1: Y=1 at top */
-	int8_t  buttons;  /* Similar to  IKBD */
-	int8_t  x_scale;  /* Additional parameters */
-	int8_t  y_scale;  /* Dependent on selected mode */
-	int16_t x_max;    /* Maximum X position */
-	int16_t y_max;    /* Maximum Y position */
-	int16_t x_start;  /* Start position X */
-	int16_t y_start;  /* Start position Y */
+    int8_t  topmode;  /* 0: Y=0 at bottom */
+    /* 1: Y=1 at top */
+    int8_t  buttons;  /* Similar to  IKBD */
+    int8_t  x_scale;  /* Additional parameters */
+    int8_t  y_scale;  /* Dependent on selected mode */
+    int16_t x_max;    /* Maximum X position */
+    int16_t y_max;    /* Maximum Y position */
+    int16_t x_start;  /* Start position X */
+    int16_t y_start;  /* Start position Y */
 } MOUSE;
 
 typedef struct
 {
-   void   *ibuf;    /* Pointer to buffer      */
-   int16_t ibufsiz; /* Size of buffer         */
-   int16_t ibufhd;  /* Head index             */
-   int16_t ibuftl;  /* Tail index             */
-   int16_t ibuflow; /* Low-water mark         */
-   int16_t ibufhi;  /* High-water mark        */
+    void   *ibuf;    /* Pointer to buffer      */
+    int16_t ibufsiz; /* Size of buffer         */
+    int16_t ibufhd;  /* Head index             */
+    int16_t ibuftl;  /* Tail index             */
+    int16_t ibuflow; /* Low-water mark         */
+    int16_t ibufhi;  /* High-water mark        */
 } IOREC;
 
 typedef struct
 {
-   int8_t *unshift;       /* Table of 'normal' key presses  */
-   int8_t *shift;         /* Table of Shift key presses     */
-   int8_t *capslock;      /* Table of Capslock key presses  */
-   int8_t *altunshift;    /* From TOS 4.00, undocumented!   */
-   int8_t *altshift;      /* From TOS 4.00, undocumented!   */
-   int8_t *altcapslock;   /* From TOS 4.00, undocumented!   */
-   int8_t *altgr;         /* From TOS 4.00, undocumented!   */
+    int8_t *unshift;       /* Table of 'normal' key presses  */
+    int8_t *shift;         /* Table of Shift key presses     */
+    int8_t *capslock;      /* Table of Capslock key presses  */
+    int8_t *altunshift;    /* From TOS 4.00, undocumented!   */
+    int8_t *altshift;      /* From TOS 4.00, undocumented!   */
+    int8_t *altcapslock;   /* From TOS 4.00, undocumented!   */
+    int8_t *altgr;         /* From TOS 4.00, undocumented!   */
 } KEYTAB;
 
 typedef struct
 {
-   void   (*kb_midivec)();   /* MIDI interrupt vector    */
-   void   (*kb_vkbderr)();   /* Keyboard error vector    */
-   void   (*kb_vmiderr)();   /* MIDI error vector        */
-   void   (*kb_statvec)();   /* Keyboard status          */
-   void   (*kb_mousevec)();  /* Keyboard mouse status    */
-   void   (*kb_clockvec)();  /* Keyboard clock           */
-   void   (*kb_joyvec)();    /* Keyboard joystick status */
-   void   (*kb_midisys)();   /* System Midi vector       */
-   void   (*kb_kbdsys)();    /* Keyboard vector          */
-   int8_t drvstat;           /* Keyboard driver status   */
+    void (*kb_midivec)();   /* MIDI interrupt vector    */
+    void (*kb_vkbderr)();   /* Keyboard error vector    */
+    void (*kb_vmiderr)();   /* MIDI error vector        */
+    void (*kb_statvec)();   /* Keyboard status          */
+    void (*kb_mousevec)();  /* Keyboard mouse status    */
+    void (*kb_clockvec)();  /* Keyboard clock           */
+    void (*kb_joyvec)();    /* Keyboard joystick status */
+    void (*kb_midisys)();   /* System Midi vector       */
+    void (*kb_kbdsys)();    /* Keyboard vector          */
+    int8_t drvstat;           /* Keyboard driver status   */
 } KBDVBASE;
 
 typedef struct
 {
-   void    *pb_scrptr;  /* Pointer to start of screen memory */
-   int16_t  pb_offset;  /* Offset to be added to this        */
-   int16_t  pb_width;   /* Screen width in dots              */
-   int16_t  pb_height;  /* Screen height in dots             */
-   int16_t  pb_left;    /* Left margin in dots               */
-   int16_t  pb_right;   /* Right margin in dots              */
-   int16_t  pb_screz;   /* Resolution                        */
-   int16_t  pb_prrez;   /* Printer type (Atari/Epson)        */
-   void    *pb_colptr;  /* Pointer to colour palette         */
-   int16_t  pb_prtype;  /* 0: Atari matrix monochrome
-                           1: Atari matrix colour
-                           2: Atari daisywheel monochrome
-                           3: Epson matrix monochrome        */
-   int16_t  pb_prport;  /* Centronics/RS-232 port            */
-   void    *pb_mask;    /* Pointer to halftone mask          */
+    void    *pb_scrptr;  /* Pointer to start of screen memory */
+    int16_t  pb_offset;  /* Offset to be added to this        */
+    int16_t  pb_width;   /* Screen width in dots              */
+    int16_t  pb_height;  /* Screen height in dots             */
+    int16_t  pb_left;    /* Left margin in dots               */
+    int16_t  pb_right;   /* Right margin in dots              */
+    int16_t  pb_screz;   /* Resolution                        */
+    int16_t  pb_prrez;   /* Printer type (Atari/Epson)        */
+    void    *pb_colptr;  /* Pointer to colour palette         */
+    int16_t  pb_prtype;  /* 0: Atari matrix monochrome
+			    1: Atari matrix colour
+			    2: Atari daisywheel monochrome
+			    3: Epson matrix monochrome        */
+    int16_t  pb_prport;  /* Centronics/RS-232 port            */
+    void    *pb_mask;    /* Pointer to halftone mask          */
 } PBDEF;
 
 /* XBIOS functions */
@@ -215,8 +220,8 @@ void    Xbtimer(int16_t timer, int16_t control, int16_t data, void(*vector)(void
 void   *Dosound(const int8_t *buf);
 int16_t Setprt(int16_t config);
 KBDVBASE *Kbdvbase(void);
-int16_t Kbrate( int16_t initial, int16_t repeat);
-int16_t Prtblk( PBDEF *par );
+int16_t Kbrate(int16_t initial, int16_t repeat);
+int16_t Prtblk(PBDEF *par);
 void    Vsync(void);
 int32_t Supexec(int32_t (*func)(void));
 void    Puntaes(void);
@@ -237,22 +242,84 @@ typedef struct
     int8_t    buffer[255];   /* Line buffer         */
 } LINE;
 
-/* Terminate program, returning 0 as error code*/
+typedef struct
+{
+    int8_t    d_reserved[21];  /* Reserved for GEMDOS */
+    uint8_t   d_attrib;        /* File attributes     */
+    uint16_t  d_time;          /* Time                */
+    uint16_t  d_date;          /* Date                */
+    uint32_t  d_length;        /* File length         */
+    int8_t    d_fname[14];     /* Filename            */
+} DTA;
+
+typedef struct
+{
+    uint32_t   b_free;    /* Number of free clusters  */
+    uint32_t   b_total;   /* Total number of clusters */
+    uint32_t   b_secsiz;  /* Bytes per sektor         */
+    uint32_t   b_clsiz;   /* sector per cluster       */
+} DISKINFO;
+
+typedef struct
+{
+    uint16_t     time;  /* Time like Tgettime */
+    uint16_t     date;  /* Date like Tgetdate */
+} DOSTIME;
+
 void Pterm0(void);
-
-/* Terminate the program with the given return code */
-void Pterm(uint16_t);
-
-/* Output a character */
-void Cconout(int16_t);
-
-/* Wait for a key (no echo) */
-void Cnecin();
-
-/* Display a string*/
-void Cconws(const char *);
-
-/* Read string from console */
+int32_t Cconin(void);
+int32_t Cconout(int16_t c);
+int32_t Cauxin(void);
+int32_t Cauxout(int16_t c);
+int32_t Cprnout(int16_t c);
+int32_t Crawio(int16_t w);
+int32_t Crawcin(void);
+int32_t Cnecin(void);
+int32_t Cconws(const char *buf);
 int32_t Cconrs(LINE *buf);
+int32_t Cconis(void);
+int32_t Dsetdrv(int16_t drv);
+int16_t Cconos(void);
+int16_t Cprnos(void);
+int16_t Cauxis(void);
+int16_t Cauxos(void);
+int32_t Maddalt (void *start, int32_t size);
+int32_t Srealloc(int32_t len);
+int16_t Dgetdrv(void);
+void Fsetdta(DTA *buf);
+int32_t Super(void *stack);
+uint32_t Tgetdate(void);
+int16_t Tsetdate(uint16_t date);
+uint32_t Tgettime(void);
+int16_t Tsettime(uint16_t time);
+DTA *Fgetdta(void);
+uint16_t Sversion(void);
+void Ptermres(int32_t keepcnt, int16_t retcode);
+int16_t Dfree(DISKINFO *buf, int16_t driveno);
+int32_t Dcreate(const char *path);
+int32_t Ddelete(const char *path);
+int16_t Dsetpath(const char *path);
+int16_t Fcreate(const char *fname, int16_t attr);
+int32_t Fopen(const char *fname, int16_t mode);
+int16_t Fclose(int16_t handle);
+int32_t Fread(int16_t handle, int32_t count, void *buf);
+int32_t Fwrite(int16_t handle, int32_t count, void *buf);
+int16_t Fdelete(const char *fname);
+int32_t Fseek(int32_t offset, int16_t handle, int16_t seekmode);
+int16_t Fattrib(const char *filename, int16_t wflag, int16_t attrib);
+void *Mxalloc(int32_t amount, int16_t mode);
+int16_t Fdup(int16_t handle);
+int16_t Fforce(int16_t stdh, int16_t nonstdh);
+int16_t Dgetpath(const char *path, int16_t driveno);
+
+void *Malloc(int32_t number);
+int32_t Mfree(void *block);
+int32_t Mshrink(void *block, int32_t newsiz);
+int32_t CDECL Pexec(uint16_t mode,...);
+void Pterm (uint16_t retcode);
+int32_t Fsfirst(const char *filename, int16_t attr);
+int16_t Fsnext(void);
+int32_t Frename(const char *oldname, const int8_t *newname);
+void Fdatime(DOSTIME *timeptr, int16_t handle, int16_t wflag);
 
 #endif

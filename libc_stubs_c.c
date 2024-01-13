@@ -1,4 +1,4 @@
-#include <tos.h>
+#include "tos.h"
 
 int _Stub_access(const char *path, int mode) {
     short magic;
@@ -6,13 +6,13 @@ int _Stub_access(const char *path, int mode) {
     flags = 0;
     
     if ((mode & 6) == 6) { /* R_OK | W_OK */
-	flags = 2;
+	flags = 2; /* Read-write */
     }
-    if (mode = 4 || mode == 0) { /* R_OK or F_OK */
-	flags = 0
+    if (mode == 4 || mode == 0) { /* R_OK or F_OK */
+	flags = 0; /* Read-only */
     }
-    else if (mode = 2) { /* W_OK */
-	flags = 1;
+    else if (mode == 2) { /* W_OK */
+	flags = 1; /* Write-only */
     }
 
     if (flags & 1) {
@@ -28,8 +28,11 @@ int _Stub_access(const char *path, int mode) {
     }
     if (mode & 1) { /* X_OK */
 	/* Test execution */
-	long r = Fread(h,sizeof(magic),magic);
-	if (r != sizeof(magic) || magic == 0x601a)
+	long r = Fread(h, sizeof(magic), &magic);
+	if (r != sizeof(magic) || magic == 0x601a) {
+	    Fclose(h);
+	    return -1;
+	}
 	
     }
     Fclose(h);
