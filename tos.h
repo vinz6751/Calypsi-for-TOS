@@ -4,7 +4,7 @@
 /* Thank you tos.hyp ! */
 #define CDECL __attribute__((simple_call))
 
-/* Registered clobbered by the TOS (used by OS bindings */
+/* Registered clobbered by the TOS (used by OS bindings) */
 #define TOS_CLOBBERED_REGS "d0","d1","d2","a0","a1","a2"
 typedef void (*_cpu_irq_handler_t)(void);
 
@@ -36,6 +36,7 @@ typedef void (*_cpu_irq_handler_t)(void);
 #define ELOOP   -80 /* Endless loop with symbolic links */
 #define EPIPE   -81 /* Write to broken pipe. */
 
+
 /* BIOS structures */
 /* BIOS parameter block */
 typedef struct
@@ -58,29 +59,29 @@ typedef struct
 /* Process Descriptor */
 typedef struct basepage_t
 {
-    char *p_lowtpa;	/* pointer to self (bottom of TPA) */
-    char *p_hitpa;	/* pointer to top of TPA + 1 */
-    char *p_tbase;	/* base of text segment */
-    long  p_tlen;	/* 12 length of text segment */
-    char *p_dbase;	/* base of data segment */
-    long  p_dlen;	/* length of data segment */
-    char *p_bbase;	/* base of BSS segment */
-    long  p_blen;	/* length of BSS segment */
-    char *p_dta;	/* pointer to current DTA */
-    struct basepage_t	*p_parent;	/* pointer to parent's basepage */
-    char *p_reserved;	/* reserved for future use */
-    char *p_env;	/* pointer to environment string */
-    long  p_undef[20];	/* scratch area... don't touch */
-    char  p_cmdlin[128];/* command line image */
+    int8_t *p_lowtpa;      /* pointer to self (bottom of TPA) */
+    int8_t *p_hitpa;       /* pointer to top of TPA + 1 */
+    int8_t *p_tbase;       /* base of text segment */
+    int32_t p_tlen;        /* 12 length of text segment */
+    int8_t *p_dbase;       /* base of data segment */
+    int32_t p_dlen;        /* length of data segment */
+    int8_t *p_bbase;       /* base of BSS segment */
+    int32_t p_blen;        /* length of BSS segment */
+    int8_t *p_dta;         /* pointer to current DTA */
+    struct basepage_t *p_parent; /* pointer to parent's basepage */
+    int8_t *p_reserved;    /* reserved for future use */
+    char   *p_env;         /* pointer to environment string */
+    int32_t p_undef[20];   /* scratch area... don't touch */
+    char    p_cmdlin[128]; /* command line image */
 } BASEPAGE;
 
 /* Memory Descriptor */
 typedef struct md_t
 {
-    struct md_t *m_link;/* Next MD (or NULL)          */
-    long m_start;       /* saddr of block             */
-    long m_length;      /* # bytes in block           */
-    BASEPAGE *m_own;    /* Owner's process descriptor */
+    struct md_t *m_link; /* Next MD (or NULL)          */
+    int32_t m_start;     /* saddr of block             */
+    int32_t m_length;    /* # bytes in block           */
+    BASEPAGE *m_own;     /* Owner's process descriptor */
 } MD;
 
 /* Memory Partition Block */
@@ -176,9 +177,9 @@ typedef struct
     int16_t  pb_prrez;   /* Printer type (Atari/Epson)        */
     void    *pb_colptr;  /* Pointer to colour palette         */
     int16_t  pb_prtype;  /* 0: Atari matrix monochrome
-			    1: Atari matrix colour
-			    2: Atari daisywheel monochrome
-			    3: Epson matrix monochrome        */
+                            1: Atari matrix colour
+                            2: Atari daisywheel monochrome
+                            3: Epson matrix monochrome        */
     int16_t  pb_prport;  /* Centronics/RS-232 port            */
     void    *pb_mask;    /* Pointer to halftone mask          */
 } PBDEF;
@@ -230,7 +231,6 @@ int16_t DMAread(int32_t sector, int16_t count, void *buffer, int16_t devno);
 int16_t DMAwrite(int32_t sector, int16_t count, void *buffer, int16_t devno);
 int32_t Bconmap(int16_t devno);
 int16_t Blitmode(int16_t mode );
-
 
 
 /* GEMDOS */
@@ -311,7 +311,6 @@ void *Mxalloc(int32_t amount, int16_t mode);
 int16_t Fdup(int16_t handle);
 int16_t Fforce(int16_t stdh, int16_t nonstdh);
 int16_t Dgetpath(const char *path, int16_t driveno);
-
 void *Malloc(int32_t number);
 int32_t Mfree(void *block);
 int32_t Mshrink(void *block, int32_t newsiz);

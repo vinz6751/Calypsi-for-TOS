@@ -6,8 +6,8 @@ static char buffer[30];
 static char msg[] = "Hello world from Calypsi !\r\n";
 
 int main(int argc, char *argv[], char *env) {
-	printf("Hello from printf!\n");
-    Cconws("Env:");
+    printf("Hello from Calypsi!\n");
+    Cconws("Environment:");
     sprintf(buffer,"argc=%d\r\n", argc);
     Cconws(buffer);
     Cconws(env ? env : "NULL");Cconws("\r\n");
@@ -18,5 +18,7 @@ int main(int argc, char *argv[], char *env) {
     }
 
     Cconws(msg); /* Display some string */
+
+    Cnecin(); // Wait for key
     return 0;
 }
