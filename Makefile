@@ -26,7 +26,7 @@
 # Code model: large (full address space addressing) or small (PC-relative)
 CODE_MODEL=large
 # Data model: small (a4-relative), large (full-address space addressing and a4-relative), or far-only (full address space addressing, a4 is general purpose)
-DATA_MODEL=large
+DATA_MODEL=small
 # Stack size
 STACK_SIZE=2048
 # CPU core. Valid values are 68000, 68010
