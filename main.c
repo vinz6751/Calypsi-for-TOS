@@ -7,7 +7,7 @@ static char msg[] = "Hello world from Calypsi !\r\n";
 
 int main(int argc, char *argv[], char *env) {
     printf("Hello from Calypsi!\n");
-    Cconws("Environment:");
+    Cconws("Environment:\r\n");
     sprintf(buffer,"argc=%d\r\n", argc);
     Cconws(buffer);
     Cconws(env ? env : "NULL");Cconws("\r\n");
