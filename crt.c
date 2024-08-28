@@ -1,13 +1,22 @@
 /* Parse the command line given in the BASEPAGE.p_cmdlin */
 #include <string.h>
 
+#include "tos.h"
+
 enum cmd_line_parsing_state {
     SKIPPING_WHITESPACE,
     PARSING_QUOTED,
     PARSING_UNQUOTED
 };
 
-extern char * const __env;
+// The environment string
+char * const __env;
+
+// Pointer to the basepage
+BASEPAGE* __basepage;
+
+// Weather the app is started as a desk accessory
+char * __is_acc;
 
 int parse_cmd_line(unsigned char length, char *cmdline, char **argv)
 {
