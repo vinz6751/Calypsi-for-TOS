@@ -39,7 +39,7 @@ TARGET_OS=tos
 # Enable 64-bit double-precision floating point numbers (default is 32bits).
 DOUBLE64=no
 # Include debugging information. Makes executables bigger. yes or no.
-DEBUG=no
+DEBUG=yes
 
 
 # Preferences -----------------------------------------------------------------
@@ -131,7 +131,7 @@ else ifeq ($(TARGET_OS),raw)
 endif
 
 ifeq ($(DEBUG),yes)
-  LDFLAGS +=-l --cross-reference
+  LDFLAGS +=-l --list-file=map.lst --cross-reference
 endif
 
 # Librarian
@@ -192,7 +192,7 @@ OBJS=$(SRC_STARTUP) $(OBJS_C) $(OBJS_S) $(LIBS_OS)
 all:$(MAIN_TARGET)
 
 $(MAIN_TARGET): $(OBJS) 
-	$(LD) -o $@ $^ $(LDFLAGS)
+	$(LD) -o $@ $(LDFLAGS) $^
 # Convenience: copy that to the folder mounted as Atari drive in your favourite emulator
 #	$(CP) $@ /mnt/c/Atari/Disques/F_Coding/
 
