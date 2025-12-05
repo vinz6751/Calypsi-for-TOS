@@ -43,30 +43,21 @@
 
 __program_root_section:
 __program_tos_start:
-	; Save pointer to the Basepage (on stack or in a0 depending on whether we're an accessory)
-	move.l	a0,d0		; Desk accessory ?
-	.extern __is_acc
-	.extern __basepage
-	sne	__is_acc	; In crt0.c
-	bne.s	acc_basepage
-	move.l	4(sp),a5
-	bra.s	sav_basepage 
-acc_basepage:
-	move.l	a0,a5
-sav_basepage:
-	move.l	a5,__basepage
-
+	move.l	4(sp),a5 	; Basepage
 	; Setup the stack
 	move.l	#.sectionEnd stack,d7
 	andi.l #-2,d7			; Even address
 	move.l	d7,sp			; Setup stack
 
+	move.l	a5,-(sp)
+	move.l	a0,-(sp) 	; Desk accessory ?
+	;;  Basepage is at 4(sp)
+		
 #ifdef __CALYPSI_DATA_MODEL_SMALL__
 	; If we use the small model, setup a4
 	move.l	8(a5),a4	;Start of TEXT
 	adda.l	#_NearBaseAddress,a4
 #endif
-
 
 	; Initialize data sections if needed
 	.section tos_start, noroot, noreorder
@@ -94,28 +85,23 @@ __call_heap_initialize:
 	move.l	#__default_heap,a0
 	move.l	#.sectionStart heap,a1
 	call	__heap_initialize
-
+	
 	.section tos_start, noroot, noreorder
-
-	; If the system if a Foenix, figure out the address of GAVIN
-#ifdef __CALYPSI_TARGET_SYSTEM_FOENIX__
-	.pubweak _Gavin_initialize
-_Gavin_initialize:
-	move.l	#GavinLow,a0  ; assume A2560U system
-	cmp.w	#0x4567,0x0010(a0) ; check byte order
-	beq.s	20$
-	move.l	#GavinHigh,a0 ; no, assume A2560K 32-bit
-20$:
-	; keep base pointer to Gavin
-#ifdef __CALYPSI_DATA_MODEL_SMALL__
-	move.l	a0,(.near _Gavin,A4)
-#else
-	move.l	a0,_Gavin
-#endif // __CALYPSI_DATA_MODEL_SMALL__
-#endif // __CALYPSI_TARGET_SYSTEM_FOENIX__
-
-	.section tos_start, noroot, noreorder
-
+do_crt0:
+	movea.l	(sp)+,a0
+	movea.l (sp)+,a5
+	; Save pointer to the Basepage (on stack or in a0 depending on whether we're an accessory)
+	move.l	a0,d0		; Desk accessory ?
+	.extern __is_acc
+	.extern __basepage
+	sne	__is_acc	; In crt0.c
+	bne.s	acc_basepage
+	bra.s	sav_basepage 
+acc_basepage:
+	move.l	a0,a5
+sav_basepage:
+	move.l	a5,__basepage
+	
 	; Everything else is standard ATARI TOS program init code
 	; Compute required size of TPA
 	tst.b	__is_acc

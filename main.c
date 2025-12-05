@@ -3,11 +3,11 @@
 
 
 static char buffer[30];
-static char msg[] = "Hello world from Calypsi !\r\n";
+static char msg[] = "Some data in the DATA segment !\r\n";
 
 int main(int argc, char *argv[], char *env) {
-#if 0
-    printf("Hello from Calypsi!\n");
+#if 1
+    printf("Hello from Calypsi!\r\n");
 #endif
     Cconws("Environment:\r\n");
 #if 0

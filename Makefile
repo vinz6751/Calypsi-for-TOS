@@ -118,7 +118,9 @@ else
 endif
 CLIB = clib-$(CPU_CORE)-$(LIB_CODE_MODEL)-$(LIB_DATA_MODEL)$(LIB_DOUBLE64)$(LIB_TARGET_HW).a
 
-LDFLAGS=--stack-size $(STACK_SIZE) $(CLIB)
+#TODO we shoudl be able to enable tree shaking but it doesn't seem to
+LDFLAGS=--stack-size $(STACK_SIZE) $(CLIB) --no-tree-shaking
+
 ifeq ($(TARGET_OS),tos)
   LDFLAGS += --output-format=tos --rtattr cstartup=tos
   # Note: --hosted is assumed for the TOS target
